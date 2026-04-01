@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,10 +12,14 @@
     <header>
       <h1>Typo</h1>
       <nav>
-        <button class="nav-btn active" data-view="practice">Practice</button>
-        <button class="nav-btn" data-view="curriculum">30-Day Plan</button>
-        <button class="nav-btn" data-view="stats">Statistics</button>
+        <button class="nav-btn active" data-view="practice" data-i18n="practice">Practice</button>
+        <button class="nav-btn" data-view="curriculum" data-i18n="curriculum">30-Day Plan</button>
+        <button class="nav-btn" data-view="stats" data-i18n="stats">Statistics</button>
       </nav>
+      <div id="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="de">DE</button>
+      </div>
     </header>
 
     <!-- Practice View -->
@@ -36,9 +40,10 @@
         <div id="text-content"></div>
       </div>
 
-      <input type="text" id="typing-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Click here and start typing...">
+      <input type="text" id="typing-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Click here and start typing..." data-i18n-placeholder="clickToStart">
 
-      <div id="keyboard">
+      <!-- QWERTY Keyboard (English) -->
+      <div id="keyboard-en" class="keyboard">
         <div class="kb-row">
           <div class="key" data-key="`">` <small>~</small></div>
           <div class="key" data-key="1">1</div>
@@ -111,91 +116,178 @@
         </div>
       </div>
 
+      <!-- QWERTZ Keyboard (German) -->
+      <div id="keyboard-de" class="keyboard" style="display:none">
+        <div class="kb-row">
+          <div class="key" data-key="^">^</div>
+          <div class="key" data-key="1">1</div>
+          <div class="key" data-key="2">2</div>
+          <div class="key" data-key="3">3</div>
+          <div class="key" data-key="4">4</div>
+          <div class="key" data-key="5">5</div>
+          <div class="key" data-key="6">6</div>
+          <div class="key" data-key="7">7</div>
+          <div class="key" data-key="8">8</div>
+          <div class="key" data-key="9">9</div>
+          <div class="key" data-key="0">0</div>
+          <div class="key" data-key="ß">ß</div>
+          <div class="key" data-key="´">´</div>
+          <div class="key wide-2" data-key="Backspace">Backspace</div>
+        </div>
+        <div class="kb-row">
+          <div class="key wide-1-5" data-key="Tab">Tab</div>
+          <div class="key" data-key="q">Q</div>
+          <div class="key" data-key="w">W</div>
+          <div class="key" data-key="e">E</div>
+          <div class="key" data-key="r">R</div>
+          <div class="key" data-key="t">T</div>
+          <div class="key" data-key="z">Z</div>
+          <div class="key" data-key="u">U</div>
+          <div class="key" data-key="i">I</div>
+          <div class="key" data-key="o">O</div>
+          <div class="key" data-key="p">P</div>
+          <div class="key" data-key="ü">Ü</div>
+          <div class="key" data-key="+">+</div>
+          <div class="key wide-1-5" data-key="#">#</div>
+        </div>
+        <div class="kb-row">
+          <div class="key wide-1-75" data-key="CapsLock">Caps</div>
+          <div class="key home" data-key="a">A</div>
+          <div class="key home" data-key="s">S</div>
+          <div class="key home" data-key="d">D</div>
+          <div class="key home" data-key="f">F</div>
+          <div class="key" data-key="g">G</div>
+          <div class="key" data-key="h">H</div>
+          <div class="key home" data-key="j">J</div>
+          <div class="key home" data-key="k">K</div>
+          <div class="key home" data-key="l">L</div>
+          <div class="key" data-key="ö">Ö</div>
+          <div class="key" data-key="ä">Ä</div>
+          <div class="key wide-2" data-key="Enter">Enter</div>
+        </div>
+        <div class="kb-row">
+          <div class="key wide-2-25" data-key="ShiftLeft">Shift</div>
+          <div class="key" data-key="<">&lt;</div>
+          <div class="key" data-key="y">Y</div>
+          <div class="key" data-key="x">X</div>
+          <div class="key" data-key="c">C</div>
+          <div class="key" data-key="v">V</div>
+          <div class="key" data-key="b">B</div>
+          <div class="key" data-key="n">N</div>
+          <div class="key" data-key="m">M</div>
+          <div class="key" data-key=",">,</div>
+          <div class="key" data-key=".">.</div>
+          <div class="key" data-key="-">-</div>
+          <div class="key wide-2" data-key="ShiftRight">Shift</div>
+        </div>
+        <div class="kb-row">
+          <div class="key wide-1-5" data-key="Control">Strg</div>
+          <div class="key wide-1-25" data-key="Meta">Win</div>
+          <div class="key wide-1-25" data-key="Alt">Alt</div>
+          <div class="key space" data-key=" ">Leertaste</div>
+          <div class="key wide-1-25" data-key="AltRight">AltGr</div>
+          <div class="key wide-1-25" data-key="Meta">Win</div>
+          <div class="key wide-1-5" data-key="Control">Strg</div>
+        </div>
+      </div>
+
       <div id="lesson-controls">
-        <button id="btn-restart">Restart</button>
-        <button id="btn-next">Next Lesson</button>
+        <button id="btn-restart" data-i18n="restart">Restart</button>
+        <button id="btn-next" data-i18n="nextLesson">Next Lesson</button>
+      </div>
+
+      <!-- Mistake Trainer -->
+      <div id="mistake-trainer">
+        <div id="mistake-header">
+          <h3 data-i18n="mistakeTrainer">Mistake Trainer</h3>
+          <span id="mistake-count"></span>
+        </div>
+        <div id="mistake-words"></div>
+        <button id="btn-practice-mistakes" data-i18n="practiceMistakes" style="display:none">Practice Mistakes</button>
       </div>
     </section>
 
     <!-- Results Modal -->
     <div id="results-modal" class="modal hidden">
       <div class="modal-content">
-        <h2>Lesson Complete!</h2>
+        <h2 data-i18n="lessonComplete">Lesson Complete!</h2>
         <div id="results-grid">
           <div class="result-card">
             <span class="result-value" id="result-wpm">0</span>
-            <span class="result-label">Words per Minute</span>
+            <span class="result-label" data-i18n="wordsPerMinute">Words per Minute</span>
           </div>
           <div class="result-card">
             <span class="result-value" id="result-accuracy">0%</span>
-            <span class="result-label">Accuracy</span>
+            <span class="result-label" data-i18n="accuracy">Accuracy</span>
           </div>
           <div class="result-card">
             <span class="result-value" id="result-time">0:00</span>
-            <span class="result-label">Time</span>
+            <span class="result-label" data-i18n="time">Time</span>
           </div>
           <div class="result-card">
             <span class="result-value" id="result-errors">0</span>
-            <span class="result-label">Errors</span>
+            <span class="result-label" data-i18n="errors">Errors</span>
           </div>
         </div>
         <div id="results-message"></div>
         <div class="modal-actions">
-          <button id="btn-retry">Try Again</button>
-          <button id="btn-continue">Continue</button>
+          <button id="btn-retry" data-i18n="tryAgain">Try Again</button>
+          <button id="btn-continue" data-i18n="continue">Continue</button>
         </div>
       </div>
     </div>
 
     <!-- Curriculum View -->
     <section id="view-curriculum" class="view">
-      <h2>30-Day Touch Typing Curriculum</h2>
+      <h2 data-i18n="curriculumTitle">30-Day Touch Typing Curriculum</h2>
       <div id="curriculum-list"></div>
     </section>
 
     <!-- Stats View -->
     <section id="view-stats" class="view">
-      <h2>Your Progress</h2>
+      <h2 data-i18n="yourProgress">Your Progress</h2>
       <div id="stats-summary">
         <div class="stat-card">
           <span class="stat-value" id="stat-best-wpm">0</span>
-          <span class="stat-label">Best WPM</span>
+          <span class="stat-label" data-i18n="bestWpm">Best WPM</span>
         </div>
         <div class="stat-card">
           <span class="stat-value" id="stat-avg-wpm">0</span>
-          <span class="stat-label">Average WPM</span>
+          <span class="stat-label" data-i18n="avgWpm">Average WPM</span>
         </div>
         <div class="stat-card">
           <span class="stat-value" id="stat-avg-accuracy">0%</span>
-          <span class="stat-label">Average Accuracy</span>
+          <span class="stat-label" data-i18n="avgAccuracy">Average Accuracy</span>
         </div>
         <div class="stat-card">
           <span class="stat-value" id="stat-lessons-done">0</span>
-          <span class="stat-label">Lessons Completed</span>
+          <span class="stat-label" data-i18n="lessonsCompleted">Lessons Completed</span>
         </div>
         <div class="stat-card">
           <span class="stat-value" id="stat-total-time">0m</span>
-          <span class="stat-label">Total Practice Time</span>
+          <span class="stat-label" data-i18n="totalTime">Total Practice Time</span>
         </div>
         <div class="stat-card">
           <span class="stat-value" id="stat-streak">0</span>
-          <span class="stat-label">Day Streak</span>
+          <span class="stat-label" data-i18n="dayStreak">Day Streak</span>
         </div>
       </div>
-      <h3>WPM Over Time</h3>
+      <h3 data-i18n="wpmOverTime">WPM Over Time</h3>
       <canvas id="chart-wpm" width="800" height="300"></canvas>
-      <h3>Session History</h3>
+      <h3 data-i18n="sessionHistory">Session History</h3>
       <div id="history-table-wrap">
         <table id="history-table">
-          <thead><tr><th>Date</th><th>Lesson</th><th>WPM</th><th>Accuracy</th><th>Time</th></tr></thead>
+          <thead><tr><th data-i18n="date">Date</th><th data-i18n="lesson">Lesson</th><th>WPM</th><th data-i18n="accuracy">Accuracy</th><th data-i18n="time">Time</th></tr></thead>
           <tbody id="history-body"></tbody>
         </table>
       </div>
-      <button id="btn-reset-data" class="danger">Reset All Data</button>
+      <button id="btn-reset-data" class="danger" data-i18n="resetAll">Reset All Data</button>
     </section>
   </div>
 
   <script src="curriculum.js"></script>
+  <script src="curriculum-de.js"></script>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

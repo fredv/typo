@@ -49,7 +49,24 @@ header h1 {
   color: var(--primary);
 }
 
-nav { display: flex; gap: 0.25rem; }
+nav { display: flex; gap: 0.25rem; flex: 1; justify-content: center; }
+
+/* === Language Toggle === */
+#lang-toggle { display: flex; gap: 2px; background: var(--surface); border-radius: 6px; padding: 2px; }
+.lang-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: all 0.15s;
+}
+.lang-btn:hover { color: var(--text); }
+.lang-btn.active { color: #fff; background: var(--primary); }
 
 .nav-btn {
   background: none;
@@ -124,8 +141,67 @@ nav { display: flex; gap: 0.25rem; }
 }
 #typing-input:focus { border-color: var(--primary); }
 
+/* === Mistake Trainer === */
+#mistake-trainer {
+  margin-top: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+#mistake-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+#mistake-header h3 { font-size: 0.9rem; font-weight: 600; }
+#mistake-count { font-size: 0.75rem; color: var(--text-dim); }
+#mistake-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  min-height: 28px;
+}
+.mistake-word {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.8rem;
+  font-family: 'Cascadia Code', 'Fira Code', monospace;
+  color: var(--error);
+}
+.mistake-word .mistake-n {
+  font-size: 0.6rem;
+  background: var(--error);
+  color: #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mistake-word.mastered {
+  color: var(--success);
+  border-color: var(--success);
+  opacity: 0.6;
+}
+#btn-practice-mistakes {
+  background: var(--warning);
+  color: var(--bg);
+  font-size: 0.8rem;
+  padding: 0.4rem 1rem;
+}
+#btn-practice-mistakes:hover { opacity: 0.9; }
+
 /* === Virtual Keyboard === */
-#keyboard {
+.keyboard {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -172,6 +248,11 @@ nav { display: flex; gap: 0.25rem; }
 .key[data-key=";"], .key[data-key="'"], .key[data-key="p"], .key[data-key="/"], .key[data-key="["], .key[data-key="]"],
 .key[data-key="\\"], .key[data-key="0"], .key[data-key="-"], .key[data-key="="] { background: var(--finger-pinky); }
 .key[data-key=" "] { background: var(--finger-thumb); }
+
+/* German QWERTZ finger coloring */
+.key[data-key="ö"], .key[data-key="ä"], .key[data-key="ü"], .key[data-key="ß"],
+.key[data-key="+"], .key[data-key="#"], .key[data-key="<"], .key[data-key="´"],
+.key[data-key="^"] { background: var(--finger-pinky); }
 
 /* Key widths */
 .wide-1-25 { min-width: 54px; }

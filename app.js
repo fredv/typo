@@ -1,5 +1,6 @@
 // === State ===
 const state = {
+  lang: 'en',
   currentDay: 0,       // 0-indexed
   currentExercise: 0,
   charIndex: 0,
@@ -10,7 +11,13 @@ const state = {
   finished: false,
   history: [],         // [{date, day, lesson, wpm, accuracy, time, errors}]
   completedDays: new Set(),
+  isMistakePractice: false,
+  // Mistake tracker: { word: { count: number, correct: number } }
+  // count = times mistyped, correct = consecutive correct typings
+  mistakes: {},
 };
+
+const CORRECT_THRESHOLD = 3; // type a word correctly 3 times in a row to clear it
 
 // === DOM refs ===
 const $ = (sel) => document.querySelector(sel);
@@ -24,12 +31,18 @@ const liveTime = $('#live-time');
 const currentDayEl = $('#current-day');
 const currentLessonTitle = $('#current-lesson-title');
 
+function getCurriculum() {
+  return state.lang === 'de' ? CURRICULUM_DE : CURRICULUM;
+}
+
 // === Persistence ===
 function saveState() {
   const data = {
+    lang: state.lang,
     currentDay: state.currentDay,
     history: state.history,
     completedDays: [...state.completedDays],
+    mistakes: state.mistakes,
   };
   localStorage.setItem('typo-state', JSON.stringify(data));
 }
@@ -39,13 +52,56 @@ function loadState() {
     const raw = localStorage.getItem('typo-state');
     if (!raw) return;
     const data = JSON.parse(raw);
+    state.lang = data.lang || 'en';
     state.currentDay = data.currentDay || 0;
     state.history = data.history || [];
     state.completedDays = new Set(data.completedDays || []);
+    state.mistakes = data.mistakes || {};
   } catch (e) {
     console.warn('Failed to load state', e);
   }
 }
+
+// === i18n ===
+function applyI18n() {
+  $$('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  $$('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.getElementById('html-root').lang = state.lang === 'de' ? 'de' : 'en';
+}
+
+// === Language Toggle ===
+$$('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const newLang = btn.dataset.lang;
+    if (newLang === state.lang) return;
+
+    state.lang = newLang;
+    $$('.lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Switch keyboard
+    if (newLang === 'de') {
+      $('#keyboard-en').style.display = 'none';
+      $('#keyboard-de').style.display = '';
+    } else {
+      $('#keyboard-en').style.display = '';
+      $('#keyboard-de').style.display = 'none';
+    }
+
+    // Clamp currentDay to new curriculum length
+    const cur = getCurriculum();
+    if (state.currentDay >= cur.length) state.currentDay = 0;
+
+    applyI18n();
+    loadLesson(state.currentDay, 0);
+    renderMistakeTrainer();
+    saveState();
+  });
+});
 
 // === Navigation ===
 $$('.nav-btn').forEach(btn => {
@@ -63,6 +119,8 @@ $$('.nav-btn').forEach(btn => {
 
 // === Lesson Loading ===
 function loadLesson(dayIndex, exerciseIndex = 0) {
+  state.isMistakePractice = false;
+  const cur = getCurriculum();
   state.currentDay = dayIndex;
   state.currentExercise = exerciseIndex;
   state.charIndex = 0;
@@ -74,8 +132,8 @@ function loadLesson(dayIndex, exerciseIndex = 0) {
   if (state.timerInterval) clearInterval(state.timerInterval);
   state.timerInterval = null;
 
-  const lesson = CURRICULUM[dayIndex];
-  currentDayEl.textContent = `Day ${lesson.day}`;
+  const lesson = cur[dayIndex];
+  currentDayEl.textContent = `${t('day')} ${lesson.day}`;
   currentLessonTitle.textContent = lesson.title;
 
   const text = lesson.exercises[exerciseIndex];
@@ -93,6 +151,50 @@ function loadLesson(dayIndex, exerciseIndex = 0) {
   saveState();
 }
 
+function loadMistakePractice() {
+  const words = getMistakeWords();
+  if (words.length === 0) return;
+
+  state.isMistakePractice = true;
+  state.charIndex = 0;
+  state.errors = 0;
+  state.totalChars = 0;
+  state.startTime = null;
+  state.finished = false;
+
+  if (state.timerInterval) clearInterval(state.timerInterval);
+  state.timerInterval = null;
+
+  currentDayEl.textContent = t('mistakeTrainer');
+  currentLessonTitle.textContent = t('mistakeDesc');
+
+  // Build practice text: repeat each word, shuffle
+  const practiceWords = [];
+  words.forEach(w => {
+    // Repeat proportional to mistake count (min 2, max 5)
+    const reps = Math.min(5, Math.max(2, state.mistakes[w].count));
+    for (let i = 0; i < reps; i++) practiceWords.push(w);
+  });
+  // Shuffle
+  for (let i = practiceWords.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [practiceWords[i], practiceWords[j]] = [practiceWords[j], practiceWords[i]];
+  }
+
+  const text = practiceWords.join(' ');
+  renderText(text);
+
+  typingInput.value = '';
+  typingInput.disabled = false;
+  typingInput.focus();
+
+  liveWpm.textContent = '0';
+  liveAccuracy.textContent = '100';
+  liveTime.textContent = '0:00';
+
+  highlightNextKey(text, 0);
+}
+
 function renderText(text) {
   textContent.innerHTML = '';
   for (let i = 0; i < text.length; i++) {
@@ -104,7 +206,11 @@ function renderText(text) {
 }
 
 function getCurrentText() {
-  return CURRICULUM[state.currentDay].exercises[state.currentExercise];
+  if (state.isMistakePractice) {
+    // Reconstruct from displayed chars
+    return Array.from(textContent.querySelectorAll('.char')).map(c => c.textContent).join('');
+  }
+  return getCurriculum()[state.currentDay].exercises[state.currentExercise];
 }
 
 // === Typing Logic ===
@@ -165,7 +271,7 @@ function updateLiveStats() {
   if (!state.startTime) return;
   const elapsed = (Date.now() - state.startTime) / 1000;
   const minutes = elapsed / 60;
-  const wordsTyped = state.totalChars / 5; // Standard: 1 word = 5 chars
+  const wordsTyped = state.totalChars / 5;
   const wpm = minutes > 0 ? Math.round(wordsTyped / minutes) : 0;
   const accuracy = state.totalChars > 0
     ? Math.round(((state.totalChars - state.errors) / state.totalChars) * 100)
@@ -191,6 +297,7 @@ function finishExercise() {
   const elapsed = (Date.now() - state.startTime) / 1000;
   const minutes = elapsed / 60;
   const text = getCurrentText();
+  const typed = typingInput.value;
   const wordsTyped = text.length / 5;
   const wpm = minutes > 0 ? Math.round(wordsTyped / minutes) : 0;
   const accuracy = state.totalChars > 0
@@ -198,6 +305,9 @@ function finishExercise() {
     : 100;
 
   const timeStr = formatTime(elapsed);
+
+  // Track mistakes word-by-word
+  trackMistakes(text, typed);
 
   // Show results modal
   $('#result-wpm').textContent = wpm;
@@ -207,38 +317,115 @@ function finishExercise() {
 
   // Message based on performance
   let msg = '';
-  if (accuracy >= 98 && wpm >= 40) msg = 'Outstanding! You are typing like a pro!';
-  else if (accuracy >= 95 && wpm >= 30) msg = 'Great job! Your accuracy and speed are excellent.';
-  else if (accuracy >= 90) msg = 'Good work! Keep focusing on accuracy — speed will follow.';
-  else if (accuracy >= 80) msg = 'Nice effort. Try slowing down a bit to reduce errors.';
-  else msg = 'Keep practicing! Focus on hitting the right keys, even if it feels slow.';
+  if (accuracy >= 98 && wpm >= 40) msg = t('msgOutstanding');
+  else if (accuracy >= 95 && wpm >= 30) msg = t('msgGreat');
+  else if (accuracy >= 90) msg = t('msgGood');
+  else if (accuracy >= 80) msg = t('msgNice');
+  else msg = t('msgKeep');
   $('#results-message').textContent = msg;
 
   $('#results-modal').classList.remove('hidden');
 
-  // Save to history
-  const record = {
-    date: new Date().toISOString(),
-    day: state.currentDay + 1,
-    lesson: CURRICULUM[state.currentDay].title,
-    exercise: state.currentExercise + 1,
-    wpm,
-    accuracy,
-    time: elapsed,
-    errors: state.errors,
-  };
-  state.history.push(record);
+  // Save to history (skip for mistake practice)
+  if (!state.isMistakePractice) {
+    const cur = getCurriculum();
+    const record = {
+      date: new Date().toISOString(),
+      day: state.currentDay + 1,
+      lesson: cur[state.currentDay].title,
+      exercise: state.currentExercise + 1,
+      wpm,
+      accuracy,
+      time: elapsed,
+      errors: state.errors,
+      lang: state.lang,
+    };
+    state.history.push(record);
 
-  // Mark day as completed if all exercises done or accuracy >= 80%
-  const lesson = CURRICULUM[state.currentDay];
-  const isLastExercise = state.currentExercise >= lesson.exercises.length - 1;
-  if (isLastExercise && accuracy >= 80) {
-    state.completedDays.add(state.currentDay);
+    // Mark day as completed if all exercises done and accuracy >= 80%
+    const lesson = cur[state.currentDay];
+    const isLastExercise = state.currentExercise >= lesson.exercises.length - 1;
+    if (isLastExercise && accuracy >= 80) {
+      state.completedDays.add(state.currentDay);
+    }
   }
 
   saveState();
   clearKeyboardHighlights();
+  renderMistakeTrainer();
 }
+
+// === Mistake Tracking ===
+function trackMistakes(expected, typed) {
+  // Split both into words aligned by position
+  const expectedWords = expected.split(/\s+/);
+  const typedWords = typed.split(/\s+/);
+
+  let charPos = 0;
+  for (let i = 0; i < expectedWords.length; i++) {
+    const ew = expectedWords[i];
+    const tw = typedWords[i] || '';
+
+    if (ew !== tw) {
+      // This word was mistyped
+      const key = ew.toLowerCase();
+      if (!state.mistakes[key]) {
+        state.mistakes[key] = { count: 0, correct: 0 };
+      }
+      state.mistakes[key].count++;
+      state.mistakes[key].correct = 0; // reset consecutive correct
+    } else {
+      // Typed correctly
+      const key = ew.toLowerCase();
+      if (state.mistakes[key]) {
+        state.mistakes[key].correct++;
+        if (state.mistakes[key].correct >= CORRECT_THRESHOLD) {
+          delete state.mistakes[key]; // mastered!
+        }
+      }
+    }
+    charPos += ew.length + 1;
+  }
+}
+
+function getMistakeWords() {
+  return Object.keys(state.mistakes).filter(w => state.mistakes[w].correct < CORRECT_THRESHOLD);
+}
+
+function renderMistakeTrainer() {
+  const words = getMistakeWords();
+  const container = $('#mistake-words');
+  const countEl = $('#mistake-count');
+  const practiceBtn = $('#btn-practice-mistakes');
+
+  container.innerHTML = '';
+
+  if (words.length === 0) {
+    countEl.textContent = Object.keys(state.mistakes).length === 0
+      ? t('noMistakes')
+      : t('mistakesCleared');
+    practiceBtn.style.display = 'none';
+    return;
+  }
+
+  countEl.textContent = `${words.length} ${t('wordsToReview')}`;
+  practiceBtn.style.display = '';
+
+  // Sort by mistake count descending
+  const sorted = words.sort((a, b) => state.mistakes[b].count - state.mistakes[a].count);
+
+  sorted.slice(0, 30).forEach(word => {
+    const m = state.mistakes[word];
+    const el = document.createElement('span');
+    el.className = 'mistake-word';
+    el.innerHTML = `${word} <span class="mistake-n">${m.count}</span>`;
+    container.appendChild(el);
+  });
+}
+
+$('#btn-practice-mistakes').addEventListener('click', () => {
+  loadMistakePractice();
+});
 
 function formatTime(seconds) {
   const min = Math.floor(seconds / 60);
@@ -247,18 +434,23 @@ function formatTime(seconds) {
 }
 
 // === Keyboard Highlighting ===
+function getActiveKeyboard() {
+  return state.lang === 'de' ? $('#keyboard-de') : $('#keyboard-en');
+}
+
 function highlightNextKey(text, index) {
   clearKeyboardHighlights();
   if (index >= text.length) return;
 
+  const kb = getActiveKeyboard();
   const nextChar = text[index].toLowerCase();
-  const keyEl = document.querySelector(`.key[data-key="${CSS.escape(nextChar)}"]`);
+  const keyEl = kb.querySelector(`.key[data-key="${CSS.escape(nextChar)}"]`);
   if (keyEl) keyEl.classList.add('highlight');
 
   // Also highlight shift if needed
   const original = text[index];
   if (original !== original.toLowerCase() || '~!@#$%^&*()_+{}|:"<>?'.includes(original)) {
-    const shifts = document.querySelectorAll('.key[data-key="ShiftLeft"], .key[data-key="ShiftRight"]');
+    const shifts = kb.querySelectorAll('.key[data-key="ShiftLeft"], .key[data-key="ShiftRight"]');
     shifts.forEach(s => s.classList.add('highlight'));
   }
 }
@@ -279,28 +471,38 @@ document.addEventListener('keydown', (e) => {
 
 // Physical key press visual feedback
 document.addEventListener('keydown', (e) => {
+  const kb = getActiveKeyboard();
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.code;
-  const keyEl = document.querySelector(`.key[data-key="${CSS.escape(key)}"]`)
-    || document.querySelector(`.key[data-key="${CSS.escape(e.key)}"]`);
+  const keyEl = kb.querySelector(`.key[data-key="${CSS.escape(key)}"]`)
+    || kb.querySelector(`.key[data-key="${CSS.escape(e.key)}"]`);
   if (keyEl) keyEl.classList.add('pressed');
 });
 
 document.addEventListener('keyup', (e) => {
+  const kb = getActiveKeyboard();
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.code;
-  const keyEl = document.querySelector(`.key[data-key="${CSS.escape(key)}"]`)
-    || document.querySelector(`.key[data-key="${CSS.escape(e.key)}"]`);
+  const keyEl = kb.querySelector(`.key[data-key="${CSS.escape(key)}"]`)
+    || kb.querySelector(`.key[data-key="${CSS.escape(e.key)}"]`);
   if (keyEl) keyEl.classList.remove('pressed');
 });
 
 // === Button Handlers ===
 $('#btn-restart').addEventListener('click', () => {
   $('#results-modal').classList.add('hidden');
-  loadLesson(state.currentDay, state.currentExercise);
+  if (state.isMistakePractice) {
+    loadMistakePractice();
+  } else {
+    loadLesson(state.currentDay, state.currentExercise);
+  }
 });
 
 $('#btn-retry').addEventListener('click', () => {
   $('#results-modal').classList.add('hidden');
-  loadLesson(state.currentDay, state.currentExercise);
+  if (state.isMistakePractice) {
+    loadMistakePractice();
+  } else {
+    loadLesson(state.currentDay, state.currentExercise);
+  }
 });
 
 $('#btn-next').addEventListener('click', advanceLesson);
@@ -310,14 +512,20 @@ $('#btn-continue').addEventListener('click', () => {
 });
 
 function advanceLesson() {
-  const lesson = CURRICULUM[state.currentDay];
+  if (state.isMistakePractice) {
+    // After mistake practice, go back to current lesson
+    loadLesson(state.currentDay, state.currentExercise);
+    $('#results-modal').classList.add('hidden');
+    return;
+  }
+  const cur = getCurriculum();
+  const lesson = cur[state.currentDay];
   if (state.currentExercise < lesson.exercises.length - 1) {
     loadLesson(state.currentDay, state.currentExercise + 1);
-  } else if (state.currentDay < CURRICULUM.length - 1) {
+  } else if (state.currentDay < cur.length - 1) {
     loadLesson(state.currentDay + 1, 0);
   } else {
-    // Completed all lessons — reload day 30
-    loadLesson(CURRICULUM.length - 1, 0);
+    loadLesson(cur.length - 1, 0);
   }
   $('#results-modal').classList.add('hidden');
 }
@@ -326,8 +534,9 @@ function advanceLesson() {
 function renderCurriculum() {
   const list = $('#curriculum-list');
   list.innerHTML = '';
+  const cur = getCurriculum();
 
-  CURRICULUM.forEach((lesson, i) => {
+  cur.forEach((lesson, i) => {
     const card = document.createElement('div');
     const isCompleted = state.completedDays.has(i);
     const isCurrent = i === state.currentDay;
@@ -339,8 +548,7 @@ function renderCurriculum() {
     if (isLocked) cls += ' locked';
     card.className = cls;
 
-    // Best WPM for this day
-    const dayRecords = state.history.filter(r => r.day === lesson.day);
+    const dayRecords = state.history.filter(r => r.day === lesson.day && (r.lang || 'en') === state.lang);
     const bestWpm = dayRecords.length > 0 ? Math.max(...dayRecords.map(r => r.wpm)) : null;
 
     card.innerHTML = `
@@ -355,7 +563,6 @@ function renderCurriculum() {
     if (!isLocked) {
       card.addEventListener('click', () => {
         loadLesson(i, 0);
-        // Switch to practice view
         $$('.nav-btn').forEach(b => b.classList.remove('active'));
         $$('.nav-btn')[0].classList.add('active');
         $$('.view').forEach(v => v.classList.remove('active'));
@@ -369,7 +576,7 @@ function renderCurriculum() {
 
 // === Stats View ===
 function renderStats() {
-  const h = state.history;
+  const h = state.history.filter(r => (r.lang || 'en') === state.lang);
   if (h.length === 0) {
     $('#stat-best-wpm').textContent = '0';
     $('#stat-avg-wpm').textContent = '0';
@@ -377,7 +584,7 @@ function renderStats() {
     $('#stat-lessons-done').textContent = '0';
     $('#stat-total-time').textContent = '0m';
     $('#stat-streak').textContent = '0';
-    $('#history-body').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim)">No data yet. Complete a lesson to see stats.</td></tr>';
+    $('#history-body').innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-dim)">${t('noDataYet')}</td></tr>`;
     drawChart([]);
     return;
   }
@@ -388,8 +595,7 @@ function renderStats() {
   const totalTime = h.reduce((s, r) => s + r.time, 0);
   const totalMin = Math.round(totalTime / 60);
 
-  // Calculate streak
-  const streak = calculateStreak();
+  const streak = calculateStreak(h);
 
   $('#stat-best-wpm').textContent = bestWpm;
   $('#stat-avg-wpm').textContent = avgWpm;
@@ -398,7 +604,6 @@ function renderStats() {
   $('#stat-total-time').textContent = totalMin >= 60 ? `${Math.floor(totalMin / 60)}h ${totalMin % 60}m` : `${totalMin}m`;
   $('#stat-streak').textContent = streak;
 
-  // History table (most recent first)
   const tbody = $('#history-body');
   tbody.innerHTML = '';
   [...h].reverse().slice(0, 50).forEach(r => {
@@ -406,7 +611,7 @@ function renderStats() {
     const date = new Date(r.date);
     row.innerHTML = `
       <td>${date.toLocaleDateString()}</td>
-      <td>Day ${r.day}: Ex ${r.exercise || 1}</td>
+      <td>${t('day')} ${r.day}: Ex ${r.exercise || 1}</td>
       <td>${r.wpm}</td>
       <td>${r.accuracy}%</td>
       <td>${formatTime(r.time)}</td>
@@ -414,15 +619,13 @@ function renderStats() {
     tbody.appendChild(row);
   });
 
-  // Draw WPM chart
   drawChart(h);
 }
 
-function calculateStreak() {
-  const dates = [...new Set(state.history.map(r => new Date(r.date).toDateString()))];
+function calculateStreak(history) {
+  const dates = [...new Set(history.map(r => new Date(r.date).toDateString()))];
   if (dates.length === 0) return 0;
 
-  // Sort dates descending
   const sorted = dates.map(d => new Date(d)).sort((a, b) => b - a);
 
   let streak = 1;
@@ -431,7 +634,6 @@ function calculateStreak() {
   const lastPractice = new Date(sorted[0]);
   lastPractice.setHours(0, 0, 0, 0);
 
-  // If last practice was not today or yesterday, streak is 0
   const diffFromToday = (today - lastPractice) / (1000 * 60 * 60 * 24);
   if (diffFromToday > 1) return 0;
 
@@ -456,7 +658,6 @@ function drawChart(history) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
 
-  // Set actual pixel size
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width * dpr;
   canvas.height = rect.height * dpr;
@@ -474,7 +675,7 @@ function drawChart(history) {
     ctx.fillStyle = '#8b8fa3';
     ctx.font = '14px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText('Complete more lessons to see your progress chart', w / 2, h / 2);
+    ctx.fillText(t('chartEmpty'), w / 2, h / 2);
     return;
   }
 
@@ -482,7 +683,6 @@ function drawChart(history) {
   const maxWpm = Math.max(...wpms, 20);
   const minWpm = Math.min(...wpms);
 
-  // Grid lines
   ctx.strokeStyle = '#2e3340';
   ctx.lineWidth = 1;
   const gridSteps = 5;
@@ -500,7 +700,6 @@ function drawChart(history) {
     ctx.fillText(val, pad.left - 8, y + 4);
   }
 
-  // Plot line
   const rangeY = (maxWpm - minWpm + 10) || 1;
   ctx.beginPath();
   ctx.strokeStyle = '#6c8cff';
@@ -515,7 +714,6 @@ function drawChart(history) {
   });
   ctx.stroke();
 
-  // Dots
   wpms.forEach((wpm, i) => {
     const x = pad.left + (i / (wpms.length - 1)) * plotW;
     const y = pad.top + plotH - ((wpm - minWpm + 5) / rangeY) * plotH;
@@ -525,25 +723,40 @@ function drawChart(history) {
     ctx.fill();
   });
 
-  // X-axis label
   ctx.fillStyle = '#8b8fa3';
   ctx.font = '11px system-ui';
   ctx.textAlign = 'center';
-  ctx.fillText('Sessions', w / 2, h - 5);
+  ctx.fillText(t('sessions'), w / 2, h - 5);
 }
 
 // === Reset Data ===
 $('#btn-reset-data').addEventListener('click', () => {
-  if (confirm('Are you sure you want to reset all your progress? This cannot be undone.')) {
+  if (confirm(t('resetConfirm'))) {
     localStorage.removeItem('typo-state');
     state.currentDay = 0;
     state.history = [];
     state.completedDays = new Set();
+    state.mistakes = {};
     loadLesson(0, 0);
     renderStats();
+    renderMistakeTrainer();
   }
 });
 
 // === Init ===
 loadState();
+
+// Apply saved language
+$$('.lang-btn').forEach(b => b.classList.remove('active'));
+$(`.lang-btn[data-lang="${state.lang}"]`).classList.add('active');
+if (state.lang === 'de') {
+  $('#keyboard-en').style.display = 'none';
+  $('#keyboard-de').style.display = '';
+} else {
+  $('#keyboard-en').style.display = '';
+  $('#keyboard-de').style.display = 'none';
+}
+
+applyI18n();
 loadLesson(state.currentDay, 0);
+renderMistakeTrainer();
