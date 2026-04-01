@@ -96,7 +96,13 @@ const I18N = {
   },
 };
 
+function getUiLang() {
+  if (typeof state === 'undefined') return 'en';
+  // US layout → English UI; DE and US+Umlauts → German UI
+  return state.layout === 'us' ? 'en' : 'de';
+}
+
 function t(key) {
-  const lang = (typeof state !== 'undefined' && state.lang) || 'en';
+  const lang = getUiLang();
   return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
 }

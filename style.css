@@ -51,22 +51,23 @@ header h1 {
 
 nav { display: flex; gap: 0.25rem; flex: 1; justify-content: center; }
 
-/* === Language Toggle === */
-#lang-toggle { display: flex; gap: 2px; background: var(--surface); border-radius: 6px; padding: 2px; }
-.lang-btn {
-  background: none;
-  border: none;
-  color: var(--text-dim);
+/* === Layout Selector === */
+#layout-selector { flex-shrink: 0; }
+#layout-select {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
   padding: 0.35rem 0.6rem;
-  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  transition: all 0.15s;
+  outline: none;
+  transition: border-color 0.15s;
 }
-.lang-btn:hover { color: var(--text); }
-.lang-btn.active { color: #fff; background: var(--primary); }
+#layout-select:hover, #layout-select:focus { border-color: var(--primary); }
+#layout-select option { background: var(--surface); color: var(--text); }
 
 .nav-btn {
   background: none;
@@ -293,6 +294,32 @@ nav { display: flex; gap: 0.25rem; flex: 1; justify-content: center; }
 /* Thumbs: Space */
 #keyboard-de .key[data-key=" "] { background: var(--finger-thumb); }
 
+/* Finger coloring — US + Umlauts (same physical layout as QWERTY) */
+#keyboard-us-umlaut .key[data-key="a"], #keyboard-us-umlaut .key[data-key="q"], #keyboard-us-umlaut .key[data-key="z"],
+#keyboard-us-umlaut .key[data-key="1"], #keyboard-us-umlaut .key[data-key="`"] { background: var(--finger-pinky); }
+#keyboard-us-umlaut .key[data-key="s"], #keyboard-us-umlaut .key[data-key="w"], #keyboard-us-umlaut .key[data-key="x"],
+#keyboard-us-umlaut .key[data-key="2"] { background: var(--finger-ring); }
+#keyboard-us-umlaut .key[data-key="d"], #keyboard-us-umlaut .key[data-key="e"], #keyboard-us-umlaut .key[data-key="c"],
+#keyboard-us-umlaut .key[data-key="3"] { background: var(--finger-middle); }
+#keyboard-us-umlaut .key[data-key="f"], #keyboard-us-umlaut .key[data-key="r"], #keyboard-us-umlaut .key[data-key="v"],
+#keyboard-us-umlaut .key[data-key="t"], #keyboard-us-umlaut .key[data-key="g"], #keyboard-us-umlaut .key[data-key="b"],
+#keyboard-us-umlaut .key[data-key="4"], #keyboard-us-umlaut .key[data-key="5"] { background: var(--finger-index); }
+#keyboard-us-umlaut .key[data-key="j"], #keyboard-us-umlaut .key[data-key="u"], #keyboard-us-umlaut .key[data-key="m"],
+#keyboard-us-umlaut .key[data-key="y"], #keyboard-us-umlaut .key[data-key="h"], #keyboard-us-umlaut .key[data-key="n"],
+#keyboard-us-umlaut .key[data-key="6"], #keyboard-us-umlaut .key[data-key="7"] { background: var(--finger-index); }
+#keyboard-us-umlaut .key[data-key="k"], #keyboard-us-umlaut .key[data-key="i"], #keyboard-us-umlaut .key[data-key=","],
+#keyboard-us-umlaut .key[data-key="8"] { background: var(--finger-middle); }
+#keyboard-us-umlaut .key[data-key="l"], #keyboard-us-umlaut .key[data-key="o"], #keyboard-us-umlaut .key[data-key="."],
+#keyboard-us-umlaut .key[data-key="9"] { background: var(--finger-ring); }
+#keyboard-us-umlaut .key[data-key=";"], #keyboard-us-umlaut .key[data-key="'"], #keyboard-us-umlaut .key[data-key="p"],
+#keyboard-us-umlaut .key[data-key="/"], #keyboard-us-umlaut .key[data-key="["], #keyboard-us-umlaut .key[data-key="]"],
+#keyboard-us-umlaut .key[data-key="\\"], #keyboard-us-umlaut .key[data-key="0"], #keyboard-us-umlaut .key[data-key="-"],
+#keyboard-us-umlaut .key[data-key="="] { background: var(--finger-pinky); }
+#keyboard-us-umlaut .key[data-key=" "] { background: var(--finger-thumb); }
+
+/* Umlaut hint styling */
+.umlaut-hint small { color: var(--warning); opacity: 0.9; }
+
 /* Key widths */
 .wide-1-25 { min-width: 54px; }
 .wide-1-5 { min-width: 64px; }
@@ -476,5 +503,5 @@ tbody tr:hover { background: var(--surface); }
   .wide-2-25 { min-width: 64px; }
   .wide-2-75 { min-width: 80px; }
   .space { max-width: 200px; }
-  #keyboard { padding: 6px; }
+  .keyboard { padding: 6px; }
 }

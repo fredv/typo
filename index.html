@@ -16,9 +16,12 @@
         <button class="nav-btn" data-view="curriculum" data-i18n="curriculum">30-Day Plan</button>
         <button class="nav-btn" data-view="stats" data-i18n="stats">Statistics</button>
       </nav>
-      <div id="lang-toggle">
-        <button class="lang-btn active" data-lang="en">EN</button>
-        <button class="lang-btn" data-lang="de">DE</button>
+      <div id="layout-selector">
+        <select id="layout-select">
+          <option value="us">US</option>
+          <option value="de">DE QWERTZ</option>
+          <option value="us-umlaut">US + Umlauts</option>
+        </select>
       </div>
     </header>
 
@@ -188,6 +191,80 @@
           <div class="key wide-1-25" data-key="AltRight">AltGr</div>
           <div class="key wide-1-25" data-key="Meta">Win</div>
           <div class="key wide-1-5" data-key="Control">Strg</div>
+        </div>
+      </div>
+
+      <!-- US + Umlauts Keyboard (QWERTY with Option hints) -->
+      <div id="keyboard-us-umlaut" class="keyboard" style="display:none">
+        <div class="kb-row">
+          <div class="key" data-key="`">` <small>~</small></div>
+          <div class="key" data-key="1">1</div>
+          <div class="key" data-key="2">2</div>
+          <div class="key" data-key="3">3</div>
+          <div class="key" data-key="4">4</div>
+          <div class="key" data-key="5">5</div>
+          <div class="key" data-key="6">6</div>
+          <div class="key" data-key="7">7</div>
+          <div class="key" data-key="8">8</div>
+          <div class="key" data-key="9">9</div>
+          <div class="key" data-key="0">0</div>
+          <div class="key" data-key="-">-</div>
+          <div class="key" data-key="=">=</div>
+          <div class="key wide-2" data-key="Backspace">Backspace</div>
+        </div>
+        <div class="kb-row">
+          <div class="key wide-1-5" data-key="Tab">Tab</div>
+          <div class="key" data-key="q">Q</div>
+          <div class="key" data-key="w">W</div>
+          <div class="key umlaut-hint" data-key="e" data-umlaut="€">E <small>⌥€</small></div>
+          <div class="key" data-key="r">R</div>
+          <div class="key" data-key="t">T</div>
+          <div class="key" data-key="y">Y</div>
+          <div class="key umlaut-hint" data-key="u" data-umlaut="ü">U <small>⌥ü</small></div>
+          <div class="key" data-key="i">I</div>
+          <div class="key umlaut-hint" data-key="o" data-umlaut="ö">O <small>⌥ö</small></div>
+          <div class="key" data-key="p">P</div>
+          <div class="key" data-key="[">[</div>
+          <div class="key" data-key="]">]</div>
+          <div class="key wide-1-5" data-key="\">\</div>
+        </div>
+        <div class="kb-row">
+          <div class="key wide-1-75" data-key="CapsLock">Caps</div>
+          <div class="key home umlaut-hint" data-key="a" data-umlaut="ä">A <small>⌥ä</small></div>
+          <div class="key home umlaut-hint" data-key="s" data-umlaut="ß">S <small>⌥ß</small></div>
+          <div class="key home" data-key="d">D</div>
+          <div class="key home" data-key="f">F</div>
+          <div class="key" data-key="g">G</div>
+          <div class="key" data-key="h">H</div>
+          <div class="key home" data-key="j">J</div>
+          <div class="key home" data-key="k">K</div>
+          <div class="key home" data-key="l">L</div>
+          <div class="key" data-key=";">;</div>
+          <div class="key" data-key="'">'</div>
+          <div class="key wide-2" data-key="Enter">Enter</div>
+        </div>
+        <div class="kb-row">
+          <div class="key wide-2-25" data-key="ShiftLeft">Shift</div>
+          <div class="key" data-key="z">Z</div>
+          <div class="key" data-key="x">X</div>
+          <div class="key" data-key="c">C</div>
+          <div class="key" data-key="v">V</div>
+          <div class="key" data-key="b">B</div>
+          <div class="key" data-key="n">N</div>
+          <div class="key" data-key="m">M</div>
+          <div class="key" data-key=",">,</div>
+          <div class="key" data-key=".">.</div>
+          <div class="key" data-key="/">/</div>
+          <div class="key wide-2-75" data-key="ShiftRight">Shift</div>
+        </div>
+        <div class="kb-row">
+          <div class="key wide-1-5" data-key="Control">Ctrl</div>
+          <div class="key wide-1-25" data-key="Alt">⌥ Opt</div>
+          <div class="key wide-1-25" data-key="Meta">⌘ Cmd</div>
+          <div class="key space" data-key=" ">Space</div>
+          <div class="key wide-1-25" data-key="Meta">⌘ Cmd</div>
+          <div class="key wide-1-25" data-key="Alt">⌥ Opt</div>
+          <div class="key wide-1-5" data-key="Control">Ctrl</div>
         </div>
       </div>
 

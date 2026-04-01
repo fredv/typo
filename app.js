@@ -1,6 +1,6 @@
 // === State ===
 const state = {
-  lang: 'en',
+  layout: 'us',        // 'us' | 'de' | 'us-umlaut'
   currentDay: 0,       // 0-indexed
   currentExercise: 0,
   charIndex: 0,
@@ -13,11 +13,16 @@ const state = {
   completedDays: new Set(),
   isMistakePractice: false,
   // Mistake tracker: { word: { count: number, correct: number } }
-  // count = times mistyped, correct = consecutive correct typings
   mistakes: {},
 };
 
-const CORRECT_THRESHOLD = 3; // type a word correctly 3 times in a row to clear it
+const CORRECT_THRESHOLD = 3;
+
+// US+Umlauts: Option+key mapping (char → base key)
+const UMLAUT_OPTION_MAP = {
+  'ä': 'a', 'ö': 'o', 'ü': 'u', 'ß': 's', '€': 'e',
+  'Ä': 'a', 'Ö': 'o', 'Ü': 'u', 'ẞ': 's',
+};
 
 // === DOM refs ===
 const $ = (sel) => document.querySelector(sel);
@@ -30,15 +35,21 @@ const liveAccuracy = $('#live-accuracy');
 const liveTime = $('#live-time');
 const currentDayEl = $('#current-day');
 const currentLessonTitle = $('#current-lesson-title');
+const layoutSelect = $('#layout-select');
 
 function getCurriculum() {
-  return state.lang === 'de' ? CURRICULUM_DE : CURRICULUM;
+  return state.layout === 'us' ? CURRICULUM : CURRICULUM_DE;
+}
+
+function getHistoryLang() {
+  // Map layout to a history tag for filtering stats
+  return state.layout === 'us' ? 'en' : 'de';
 }
 
 // === Persistence ===
 function saveState() {
   const data = {
-    lang: state.lang,
+    layout: state.layout,
     currentDay: state.currentDay,
     history: state.history,
     completedDays: [...state.completedDays],
@@ -52,7 +63,12 @@ function loadState() {
     const raw = localStorage.getItem('typo-state');
     if (!raw) return;
     const data = JSON.parse(raw);
-    state.lang = data.lang || 'en';
+    // Migrate from old lang-based state
+    if (data.layout) {
+      state.layout = data.layout;
+    } else if (data.lang) {
+      state.layout = data.lang === 'de' ? 'de' : 'us';
+    }
     state.currentDay = data.currentDay || 0;
     state.history = data.history || [];
     state.completedDays = new Set(data.completedDays || []);
@@ -70,37 +86,39 @@ function applyI18n() {
   $$('[data-i18n-placeholder]').forEach(el => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
-  document.getElementById('html-root').lang = state.lang === 'de' ? 'de' : 'en';
+  document.getElementById('html-root').lang = getUiLang();
 }
 
-// === Language Toggle ===
-$$('.lang-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const newLang = btn.dataset.lang;
-    if (newLang === state.lang) return;
+// === Layout Selector ===
+function showKeyboardForLayout(layout) {
+  $('#keyboard-en').style.display = 'none';
+  $('#keyboard-de').style.display = 'none';
+  $('#keyboard-us-umlaut').style.display = 'none';
 
-    state.lang = newLang;
-    $$('.lang-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+  if (layout === 'de') {
+    $('#keyboard-de').style.display = '';
+  } else if (layout === 'us-umlaut') {
+    $('#keyboard-us-umlaut').style.display = '';
+  } else {
+    $('#keyboard-en').style.display = '';
+  }
+}
 
-    // Switch keyboard
-    if (newLang === 'de') {
-      $('#keyboard-en').style.display = 'none';
-      $('#keyboard-de').style.display = '';
-    } else {
-      $('#keyboard-en').style.display = '';
-      $('#keyboard-de').style.display = 'none';
-    }
+layoutSelect.addEventListener('change', () => {
+  const newLayout = layoutSelect.value;
+  if (newLayout === state.layout) return;
 
-    // Clamp currentDay to new curriculum length
-    const cur = getCurriculum();
-    if (state.currentDay >= cur.length) state.currentDay = 0;
+  state.layout = newLayout;
+  showKeyboardForLayout(newLayout);
 
-    applyI18n();
-    loadLesson(state.currentDay, 0);
-    renderMistakeTrainer();
-    saveState();
-  });
+  // Clamp currentDay to new curriculum length
+  const cur = getCurriculum();
+  if (state.currentDay >= cur.length) state.currentDay = 0;
+
+  applyI18n();
+  loadLesson(state.currentDay, 0);
+  renderMistakeTrainer();
+  saveState();
 });
 
 // === Navigation ===
@@ -168,14 +186,11 @@ function loadMistakePractice() {
   currentDayEl.textContent = t('mistakeTrainer');
   currentLessonTitle.textContent = t('mistakeDesc');
 
-  // Build practice text: repeat each word, shuffle
   const practiceWords = [];
   words.forEach(w => {
-    // Repeat proportional to mistake count (min 2, max 5)
     const reps = Math.min(5, Math.max(2, state.mistakes[w].count));
     for (let i = 0; i < reps; i++) practiceWords.push(w);
   });
-  // Shuffle
   for (let i = practiceWords.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [practiceWords[i], practiceWords[j]] = [practiceWords[j], practiceWords[i]];
@@ -207,7 +222,6 @@ function renderText(text) {
 
 function getCurrentText() {
   if (state.isMistakePractice) {
-    // Reconstruct from displayed chars
     return Array.from(textContent.querySelectorAll('.char')).map(c => c.textContent).join('');
   }
   return getCurriculum()[state.currentDay].exercises[state.currentExercise];
@@ -221,13 +235,11 @@ typingInput.addEventListener('input', (e) => {
   const chars = textContent.querySelectorAll('.char');
   const typed = typingInput.value;
 
-  // Start timer on first input
   if (!state.startTime) {
     state.startTime = Date.now();
     state.timerInterval = setInterval(updateTimer, 200);
   }
 
-  // Process all typed characters
   let errors = 0;
   for (let i = 0; i < typed.length && i < text.length; i++) {
     if (typed[i] === text[i]) {
@@ -238,7 +250,6 @@ typingInput.addEventListener('input', (e) => {
     }
   }
 
-  // Mark remaining as pending
   for (let i = typed.length; i < text.length; i++) {
     chars[i].className = `char ${i === typed.length ? 'current' : 'pending'}`;
   }
@@ -247,24 +258,18 @@ typingInput.addEventListener('input', (e) => {
   state.errors = errors;
   state.totalChars = typed.length;
 
-  // Update live stats
   updateLiveStats();
 
-  // Highlight the next key on the virtual keyboard
   if (typed.length < text.length) {
     highlightNextKey(text, typed.length);
   }
 
-  // Check completion
   if (typed.length >= text.length) {
     finishExercise();
   }
 });
 
-// Prevent paste
 typingInput.addEventListener('paste', (e) => e.preventDefault());
-
-// Click on text display focuses input
 $('#text-display').addEventListener('click', () => typingInput.focus());
 
 function updateLiveStats() {
@@ -306,16 +311,13 @@ function finishExercise() {
 
   const timeStr = formatTime(elapsed);
 
-  // Track mistakes word-by-word
   trackMistakes(text, typed);
 
-  // Show results modal
   $('#result-wpm').textContent = wpm;
   $('#result-accuracy').textContent = `${accuracy}%`;
   $('#result-time').textContent = timeStr;
   $('#result-errors').textContent = state.errors;
 
-  // Message based on performance
   let msg = '';
   if (accuracy >= 98 && wpm >= 40) msg = t('msgOutstanding');
   else if (accuracy >= 95 && wpm >= 30) msg = t('msgGreat');
@@ -326,7 +328,6 @@ function finishExercise() {
 
   $('#results-modal').classList.remove('hidden');
 
-  // Save to history (skip for mistake practice)
   if (!state.isMistakePractice) {
     const cur = getCurriculum();
     const record = {
@@ -338,11 +339,10 @@ function finishExercise() {
       accuracy,
       time: elapsed,
       errors: state.errors,
-      lang: state.lang,
+      lang: getHistoryLang(),
     };
     state.history.push(record);
 
-    // Mark day as completed if all exercises done and accuracy >= 80%
     const lesson = cur[state.currentDay];
     const isLastExercise = state.currentExercise >= lesson.exercises.length - 1;
     if (isLastExercise && accuracy >= 80) {
@@ -357,34 +357,29 @@ function finishExercise() {
 
 // === Mistake Tracking ===
 function trackMistakes(expected, typed) {
-  // Split both into words aligned by position
   const expectedWords = expected.split(/\s+/);
   const typedWords = typed.split(/\s+/);
 
-  let charPos = 0;
   for (let i = 0; i < expectedWords.length; i++) {
     const ew = expectedWords[i];
     const tw = typedWords[i] || '';
 
     if (ew !== tw) {
-      // This word was mistyped
       const key = ew.toLowerCase();
       if (!state.mistakes[key]) {
         state.mistakes[key] = { count: 0, correct: 0 };
       }
       state.mistakes[key].count++;
-      state.mistakes[key].correct = 0; // reset consecutive correct
+      state.mistakes[key].correct = 0;
     } else {
-      // Typed correctly
       const key = ew.toLowerCase();
       if (state.mistakes[key]) {
         state.mistakes[key].correct++;
         if (state.mistakes[key].correct >= CORRECT_THRESHOLD) {
-          delete state.mistakes[key]; // mastered!
+          delete state.mistakes[key];
         }
       }
     }
-    charPos += ew.length + 1;
   }
 }
 
@@ -411,7 +406,6 @@ function renderMistakeTrainer() {
   countEl.textContent = `${words.length} ${t('wordsToReview')}`;
   practiceBtn.style.display = '';
 
-  // Sort by mistake count descending
   const sorted = words.sort((a, b) => state.mistakes[b].count - state.mistakes[a].count);
 
   sorted.slice(0, 30).forEach(word => {
@@ -435,7 +429,9 @@ function formatTime(seconds) {
 
 // === Keyboard Highlighting ===
 function getActiveKeyboard() {
-  return state.lang === 'de' ? $('#keyboard-de') : $('#keyboard-en');
+  if (state.layout === 'de') return $('#keyboard-de');
+  if (state.layout === 'us-umlaut') return $('#keyboard-us-umlaut');
+  return $('#keyboard-en');
 }
 
 function highlightNextKey(text, index) {
@@ -443,13 +439,31 @@ function highlightNextKey(text, index) {
   if (index >= text.length) return;
 
   const kb = getActiveKeyboard();
-  const nextChar = text[index].toLowerCase();
-  const keyEl = kb.querySelector(`.key[data-key="${CSS.escape(nextChar)}"]`);
+  const ch = text[index];
+  const chLower = ch.toLowerCase();
+
+  // For US+Umlauts layout: umlauts are typed via Option+base key
+  if (state.layout === 'us-umlaut' && UMLAUT_OPTION_MAP[ch]) {
+    const baseKey = UMLAUT_OPTION_MAP[ch];
+    const keyEl = kb.querySelector(`.key[data-key="${CSS.escape(baseKey)}"]`);
+    if (keyEl) keyEl.classList.add('highlight');
+    // Highlight Option key
+    const optKeys = kb.querySelectorAll('.key[data-key="Alt"]');
+    optKeys.forEach(k => k.classList.add('highlight'));
+    // Also highlight Shift for uppercase umlauts (Ä, Ö, Ü, ẞ)
+    if (ch !== chLower && ch !== '€') {
+      const shifts = kb.querySelectorAll('.key[data-key="ShiftLeft"], .key[data-key="ShiftRight"]');
+      shifts.forEach(s => s.classList.add('highlight'));
+    }
+    return;
+  }
+
+  // Standard key highlighting
+  const keyEl = kb.querySelector(`.key[data-key="${CSS.escape(chLower)}"]`);
   if (keyEl) keyEl.classList.add('highlight');
 
-  // Also highlight shift if needed
-  const original = text[index];
-  if (original !== original.toLowerCase() || '~!@#$%^&*()_+{}|:"<>?'.includes(original)) {
+  // Highlight Shift for uppercase or shifted symbols
+  if (ch !== chLower || '~!@#$%^&*()_+{}|:"<>?'.includes(ch)) {
     const shifts = kb.querySelectorAll('.key[data-key="ShiftLeft"], .key[data-key="ShiftRight"]');
     shifts.forEach(s => s.classList.add('highlight'));
   }
@@ -513,7 +527,6 @@ $('#btn-continue').addEventListener('click', () => {
 
 function advanceLesson() {
   if (state.isMistakePractice) {
-    // After mistake practice, go back to current lesson
     loadLesson(state.currentDay, state.currentExercise);
     $('#results-modal').classList.add('hidden');
     return;
@@ -535,6 +548,7 @@ function renderCurriculum() {
   const list = $('#curriculum-list');
   list.innerHTML = '';
   const cur = getCurriculum();
+  const histLang = getHistoryLang();
 
   cur.forEach((lesson, i) => {
     const card = document.createElement('div');
@@ -548,7 +562,7 @@ function renderCurriculum() {
     if (isLocked) cls += ' locked';
     card.className = cls;
 
-    const dayRecords = state.history.filter(r => r.day === lesson.day && (r.lang || 'en') === state.lang);
+    const dayRecords = state.history.filter(r => r.day === lesson.day && (r.lang || 'en') === histLang);
     const bestWpm = dayRecords.length > 0 ? Math.max(...dayRecords.map(r => r.wpm)) : null;
 
     card.innerHTML = `
@@ -576,7 +590,8 @@ function renderCurriculum() {
 
 // === Stats View ===
 function renderStats() {
-  const h = state.history.filter(r => (r.lang || 'en') === state.lang);
+  const histLang = getHistoryLang();
+  const h = state.history.filter(r => (r.lang || 'en') === histLang);
   if (h.length === 0) {
     $('#stat-best-wpm').textContent = '0';
     $('#stat-avg-wpm').textContent = '0';
@@ -746,16 +761,9 @@ $('#btn-reset-data').addEventListener('click', () => {
 // === Init ===
 loadState();
 
-// Apply saved language
-$$('.lang-btn').forEach(b => b.classList.remove('active'));
-$(`.lang-btn[data-lang="${state.lang}"]`).classList.add('active');
-if (state.lang === 'de') {
-  $('#keyboard-en').style.display = 'none';
-  $('#keyboard-de').style.display = '';
-} else {
-  $('#keyboard-en').style.display = '';
-  $('#keyboard-de').style.display = 'none';
-}
+// Apply saved layout
+layoutSelect.value = state.layout;
+showKeyboardForLayout(state.layout);
 
 applyI18n();
 loadLesson(state.currentDay, 0);
