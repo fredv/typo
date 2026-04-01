@@ -235,24 +235,63 @@ nav { display: flex; gap: 0.25rem; flex: 1; justify-content: center; }
 .key.pressed { transform: scale(0.95); background: var(--primary-dim); }
 .key.home { border-bottom: 2px solid var(--primary); }
 
-/* Finger coloring */
-.key[data-key="a"], .key[data-key="q"], .key[data-key="z"], .key[data-key="1"], .key[data-key="`"] { background: var(--finger-pinky); }
-.key[data-key="s"], .key[data-key="w"], .key[data-key="x"], .key[data-key="2"] { background: var(--finger-ring); }
-.key[data-key="d"], .key[data-key="e"], .key[data-key="c"], .key[data-key="3"] { background: var(--finger-middle); }
-.key[data-key="f"], .key[data-key="r"], .key[data-key="v"], .key[data-key="t"], .key[data-key="g"], .key[data-key="b"],
-.key[data-key="4"], .key[data-key="5"] { background: var(--finger-index); }
-.key[data-key="j"], .key[data-key="u"], .key[data-key="m"], .key[data-key="y"], .key[data-key="h"], .key[data-key="n"],
-.key[data-key="6"], .key[data-key="7"] { background: var(--finger-index); }
-.key[data-key="k"], .key[data-key="i"], .key[data-key=","], .key[data-key="8"] { background: var(--finger-middle); }
-.key[data-key="l"], .key[data-key="o"], .key[data-key="."], .key[data-key="9"] { background: var(--finger-ring); }
-.key[data-key=";"], .key[data-key="'"], .key[data-key="p"], .key[data-key="/"], .key[data-key="["], .key[data-key="]"],
-.key[data-key="\\"], .key[data-key="0"], .key[data-key="-"], .key[data-key="="] { background: var(--finger-pinky); }
-.key[data-key=" "] { background: var(--finger-thumb); }
+/* Finger coloring — QWERTY (English) */
+#keyboard-en .key[data-key="a"], #keyboard-en .key[data-key="q"], #keyboard-en .key[data-key="z"],
+#keyboard-en .key[data-key="1"], #keyboard-en .key[data-key="`"] { background: var(--finger-pinky); }
+#keyboard-en .key[data-key="s"], #keyboard-en .key[data-key="w"], #keyboard-en .key[data-key="x"],
+#keyboard-en .key[data-key="2"] { background: var(--finger-ring); }
+#keyboard-en .key[data-key="d"], #keyboard-en .key[data-key="e"], #keyboard-en .key[data-key="c"],
+#keyboard-en .key[data-key="3"] { background: var(--finger-middle); }
+#keyboard-en .key[data-key="f"], #keyboard-en .key[data-key="r"], #keyboard-en .key[data-key="v"],
+#keyboard-en .key[data-key="t"], #keyboard-en .key[data-key="g"], #keyboard-en .key[data-key="b"],
+#keyboard-en .key[data-key="4"], #keyboard-en .key[data-key="5"] { background: var(--finger-index); }
+#keyboard-en .key[data-key="j"], #keyboard-en .key[data-key="u"], #keyboard-en .key[data-key="m"],
+#keyboard-en .key[data-key="y"], #keyboard-en .key[data-key="h"], #keyboard-en .key[data-key="n"],
+#keyboard-en .key[data-key="6"], #keyboard-en .key[data-key="7"] { background: var(--finger-index); }
+#keyboard-en .key[data-key="k"], #keyboard-en .key[data-key="i"], #keyboard-en .key[data-key=","],
+#keyboard-en .key[data-key="8"] { background: var(--finger-middle); }
+#keyboard-en .key[data-key="l"], #keyboard-en .key[data-key="o"], #keyboard-en .key[data-key="."],
+#keyboard-en .key[data-key="9"] { background: var(--finger-ring); }
+#keyboard-en .key[data-key=";"], #keyboard-en .key[data-key="'"], #keyboard-en .key[data-key="p"],
+#keyboard-en .key[data-key="/"], #keyboard-en .key[data-key="["], #keyboard-en .key[data-key="]"],
+#keyboard-en .key[data-key="\\"], #keyboard-en .key[data-key="0"], #keyboard-en .key[data-key="-"],
+#keyboard-en .key[data-key="="] { background: var(--finger-pinky); }
+#keyboard-en .key[data-key=" "] { background: var(--finger-thumb); }
 
-/* German QWERTZ finger coloring */
-.key[data-key="ö"], .key[data-key="ä"], .key[data-key="ü"], .key[data-key="ß"],
-.key[data-key="+"], .key[data-key="#"], .key[data-key="<"], .key[data-key="´"],
-.key[data-key="^"] { background: var(--finger-pinky); }
+/* Finger coloring — QWERTZ (German) */
+/* Left pinky: ^, 1, Q, A, <, Y */
+#keyboard-de .key[data-key="^"], #keyboard-de .key[data-key="1"],
+#keyboard-de .key[data-key="q"], #keyboard-de .key[data-key="a"],
+#keyboard-de .key[data-key="<"], #keyboard-de .key[data-key="y"] { background: var(--finger-pinky); }
+/* Left ring: 2, W, S, X */
+#keyboard-de .key[data-key="2"], #keyboard-de .key[data-key="w"],
+#keyboard-de .key[data-key="s"], #keyboard-de .key[data-key="x"] { background: var(--finger-ring); }
+/* Left middle: 3, E, D, C */
+#keyboard-de .key[data-key="3"], #keyboard-de .key[data-key="e"],
+#keyboard-de .key[data-key="d"], #keyboard-de .key[data-key="c"] { background: var(--finger-middle); }
+/* Left index: 4, 5, R, T, F, G, V, B */
+#keyboard-de .key[data-key="4"], #keyboard-de .key[data-key="5"],
+#keyboard-de .key[data-key="r"], #keyboard-de .key[data-key="t"],
+#keyboard-de .key[data-key="f"], #keyboard-de .key[data-key="g"],
+#keyboard-de .key[data-key="v"], #keyboard-de .key[data-key="b"] { background: var(--finger-index); }
+/* Right index: 6, 7, Z, U, H, J, N, M */
+#keyboard-de .key[data-key="6"], #keyboard-de .key[data-key="7"],
+#keyboard-de .key[data-key="z"], #keyboard-de .key[data-key="u"],
+#keyboard-de .key[data-key="h"], #keyboard-de .key[data-key="j"],
+#keyboard-de .key[data-key="n"], #keyboard-de .key[data-key="m"] { background: var(--finger-index); }
+/* Right middle: 8, I, K, , */
+#keyboard-de .key[data-key="8"], #keyboard-de .key[data-key="i"],
+#keyboard-de .key[data-key="k"], #keyboard-de .key[data-key=","] { background: var(--finger-middle); }
+/* Right ring: 9, O, L, . */
+#keyboard-de .key[data-key="9"], #keyboard-de .key[data-key="o"],
+#keyboard-de .key[data-key="l"], #keyboard-de .key[data-key="."] { background: var(--finger-ring); }
+/* Right pinky: 0, ß, ´, P, Ü, +, #, Ö, Ä, -, Enter */
+#keyboard-de .key[data-key="0"], #keyboard-de .key[data-key="ß"], #keyboard-de .key[data-key="´"],
+#keyboard-de .key[data-key="p"], #keyboard-de .key[data-key="ü"], #keyboard-de .key[data-key="+"],
+#keyboard-de .key[data-key="#"], #keyboard-de .key[data-key="ö"], #keyboard-de .key[data-key="ä"],
+#keyboard-de .key[data-key="-"] { background: var(--finger-pinky); }
+/* Thumbs: Space */
+#keyboard-de .key[data-key=" "] { background: var(--finger-thumb); }
 
 /* Key widths */
 .wide-1-25 { min-width: 54px; }
