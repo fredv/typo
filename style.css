@@ -51,17 +51,45 @@ header h1 {
 
 nav { display: flex; gap: 0.25rem; flex: 1; justify-content: center; }
 
-/* === Layout Selector === */
-#layout-selector { flex-shrink: 0; }
+/* === Language Toggle === */
+#lang-toggle { display: flex; gap: 2px; background: var(--surface); border-radius: 6px; padding: 2px; flex-shrink: 0; }
+.lang-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: all 0.15s;
+}
+.lang-btn:hover { color: var(--text); }
+.lang-btn.active { color: #fff; background: var(--primary); }
+
+/* === Keyboard Layout Selector === */
+#layout-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+#layout-selector label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 #layout-select {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 0.35rem 0.6rem;
+  padding: 0.3rem 0.5rem;
   font-size: 0.8rem;
   font-family: inherit;
-  font-weight: 600;
   cursor: pointer;
   outline: none;
   transition: border-color 0.15s;

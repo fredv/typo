@@ -46,6 +46,7 @@ const I18N = {
     mistakesCleared: "All mistakes cleared! Great job!",
     wordsToReview: "words to review",
     practiceMistakes: "Practice Mistakes",
+    keyboardLayout: "Keyboard",
   },
   de: {
     practice: "Übung",
@@ -93,13 +94,13 @@ const I18N = {
     mistakesCleared: "Alle Fehler behoben! Toll gemacht!",
     wordsToReview: "Wörter zum Wiederholen",
     practiceMistakes: "Fehler üben",
+    keyboardLayout: "Tastatur",
   },
 };
 
 function getUiLang() {
   if (typeof state === 'undefined') return 'en';
-  // US layout → English UI; DE and US+Umlauts → German UI
-  return state.layout === 'us' ? 'en' : 'de';
+  return state.lang || 'en';
 }
 
 function t(key) {

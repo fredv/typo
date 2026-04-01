@@ -1,6 +1,7 @@
 // === State ===
 const state = {
-  layout: 'us',        // 'us' | 'de' | 'us-umlaut'
+  lang: 'en',          // 'en' | 'de' — controls course & UI language
+  layout: 'us',        // 'us' | 'de' | 'us-umlaut' — controls visual keyboard only
   currentDay: 0,       // 0-indexed
   currentExercise: 0,
   charIndex: 0,
@@ -38,17 +39,13 @@ const currentLessonTitle = $('#current-lesson-title');
 const layoutSelect = $('#layout-select');
 
 function getCurriculum() {
-  return state.layout === 'us' ? CURRICULUM : CURRICULUM_DE;
-}
-
-function getHistoryLang() {
-  // Map layout to a history tag for filtering stats
-  return state.layout === 'us' ? 'en' : 'de';
+  return state.lang === 'de' ? CURRICULUM_DE : CURRICULUM;
 }
 
 // === Persistence ===
 function saveState() {
   const data = {
+    lang: state.lang,
     layout: state.layout,
     currentDay: state.currentDay,
     history: state.history,
@@ -63,12 +60,8 @@ function loadState() {
     const raw = localStorage.getItem('typo-state');
     if (!raw) return;
     const data = JSON.parse(raw);
-    // Migrate from old lang-based state
-    if (data.layout) {
-      state.layout = data.layout;
-    } else if (data.lang) {
-      state.layout = data.lang === 'de' ? 'de' : 'us';
-    }
+    state.lang = data.lang || 'en';
+    state.layout = data.layout || (data.lang === 'de' ? 'de' : 'us');
     state.currentDay = data.currentDay || 0;
     state.history = data.history || [];
     state.completedDays = new Set(data.completedDays || []);
@@ -86,10 +79,31 @@ function applyI18n() {
   $$('[data-i18n-placeholder]').forEach(el => {
     el.placeholder = t(el.dataset.i18nPlaceholder);
   });
-  document.getElementById('html-root').lang = getUiLang();
+  document.getElementById('html-root').lang = state.lang === 'de' ? 'de' : 'en';
 }
 
-// === Layout Selector ===
+// === Language Toggle (course selection) ===
+$$('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const newLang = btn.dataset.lang;
+    if (newLang === state.lang) return;
+
+    state.lang = newLang;
+    $$('.lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Clamp currentDay to new curriculum length
+    const cur = getCurriculum();
+    if (state.currentDay >= cur.length) state.currentDay = 0;
+
+    applyI18n();
+    loadLesson(state.currentDay, 0);
+    renderMistakeTrainer();
+    saveState();
+  });
+});
+
+// === Keyboard Layout Selector (visual keyboard only) ===
 function showKeyboardForLayout(layout) {
   $('#keyboard-en').style.display = 'none';
   $('#keyboard-de').style.display = 'none';
@@ -111,13 +125,12 @@ layoutSelect.addEventListener('change', () => {
   state.layout = newLayout;
   showKeyboardForLayout(newLayout);
 
-  // Clamp currentDay to new curriculum length
-  const cur = getCurriculum();
-  if (state.currentDay >= cur.length) state.currentDay = 0;
+  // Re-highlight the current key for the new keyboard
+  const text = getCurrentText();
+  if (!state.finished && state.charIndex < text.length) {
+    highlightNextKey(text, state.charIndex);
+  }
 
-  applyI18n();
-  loadLesson(state.currentDay, 0);
-  renderMistakeTrainer();
   saveState();
 });
 
@@ -339,7 +352,7 @@ function finishExercise() {
       accuracy,
       time: elapsed,
       errors: state.errors,
-      lang: getHistoryLang(),
+      lang: state.lang,
     };
     state.history.push(record);
 
@@ -548,7 +561,6 @@ function renderCurriculum() {
   const list = $('#curriculum-list');
   list.innerHTML = '';
   const cur = getCurriculum();
-  const histLang = getHistoryLang();
 
   cur.forEach((lesson, i) => {
     const card = document.createElement('div');
@@ -562,7 +574,7 @@ function renderCurriculum() {
     if (isLocked) cls += ' locked';
     card.className = cls;
 
-    const dayRecords = state.history.filter(r => r.day === lesson.day && (r.lang || 'en') === histLang);
+    const dayRecords = state.history.filter(r => r.day === lesson.day && (r.lang || 'en') === state.lang);
     const bestWpm = dayRecords.length > 0 ? Math.max(...dayRecords.map(r => r.wpm)) : null;
 
     card.innerHTML = `
@@ -590,8 +602,7 @@ function renderCurriculum() {
 
 // === Stats View ===
 function renderStats() {
-  const histLang = getHistoryLang();
-  const h = state.history.filter(r => (r.lang || 'en') === histLang);
+  const h = state.history.filter(r => (r.lang || 'en') === state.lang);
   if (h.length === 0) {
     $('#stat-best-wpm').textContent = '0';
     $('#stat-avg-wpm').textContent = '0';
@@ -761,7 +772,11 @@ $('#btn-reset-data').addEventListener('click', () => {
 // === Init ===
 loadState();
 
-// Apply saved layout
+// Apply saved language toggle
+$$('.lang-btn').forEach(b => b.classList.remove('active'));
+$(`.lang-btn[data-lang="${state.lang}"]`).classList.add('active');
+
+// Apply saved keyboard layout
 layoutSelect.value = state.layout;
 showKeyboardForLayout(state.layout);
 

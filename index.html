@@ -16,12 +16,9 @@
         <button class="nav-btn" data-view="curriculum" data-i18n="curriculum">30-Day Plan</button>
         <button class="nav-btn" data-view="stats" data-i18n="stats">Statistics</button>
       </nav>
-      <div id="layout-selector">
-        <select id="layout-select">
-          <option value="us">US</option>
-          <option value="de">DE QWERTZ</option>
-          <option value="us-umlaut">US + Umlauts</option>
-        </select>
+      <div id="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="de">DE</button>
       </div>
     </header>
 
@@ -44,6 +41,15 @@
       </div>
 
       <input type="text" id="typing-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Click here and start typing..." data-i18n-placeholder="clickToStart">
+
+      <div id="layout-selector">
+        <label for="layout-select" data-i18n="keyboardLayout">Keyboard</label>
+        <select id="layout-select">
+          <option value="us">US QWERTY</option>
+          <option value="de">DE QWERTZ</option>
+          <option value="us-umlaut">US + Umlauts</option>
+        </select>
+      </div>
 
       <!-- QWERTY Keyboard (English) -->
       <div id="keyboard-en" class="keyboard">
