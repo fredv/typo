@@ -297,14 +297,16 @@ const CURRICULUM_DE = [
   },
   {
     day: 25,
-    title: "Geschwindigkeit II",
-    desc: "Längere Texte für dauerhaftes Tempo",
+    title: "Rap-Texte",
+    desc: "Tippe im Rhythmus zu Rap-Zeilen",
     keys: "all",
     exercises: [
-      "Schnell tippen zu lernen ist eine der wertvollsten Fähigkeiten in der modernen Welt.",
-      "Wenn du tippen kannst ohne auf die Tastatur zu schauen, kann sich dein Gehirn auf den Inhalt konzentrieren.",
-      "Zehnfingerschreiben geht nicht nur um Geschwindigkeit. Es ist die direkte Verbindung zwischen Gedanken und Bildschirm.",
-      "Die besten Tipper üben jeden einzelnen Tag, auch wenn nur fünfzehn Minuten. Ausdauer schlägt Intensität.",
+      "Die Stadt schläft nie, die Lichter brennen hell. Ich schreibe meine Zeilen, jede Nacht aufs Neue schnell.",
+      "Kein Weg zurück, nur vorwärts Schritt für Schritt. Jeder Vers ein Herzschlag, jeder Takt ein neuer Hit.",
+      "Vom Hinterhof zur großen Bühne, Träume werden wahr. Was gestern noch unmöglich schien, ist heute wunderbar.",
+      "Die Straßen erzählen Geschichten, die keiner sonst versteht. Der Beat trägt meine Worte, bis die Sonne untergeht.",
+      "Kopf hoch, Blick nach vorn, lass die Zweifler reden. Jede Zeile ist ein Schritt auf meinen eigenen Wegen.",
+      "Mikrofon in der Hand, der Rhythmus gibt den Takt. Jedes Wort hat Gewicht, jede Silbe hat Impact.",
     ]
   },
   {

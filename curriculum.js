@@ -297,14 +297,16 @@ const CURRICULUM = [
   },
   {
     day: 25,
-    title: "Speed Building II",
-    desc: "Longer passages for sustained speed",
+    title: "Rap Lyrics",
+    desc: "Type along to rap-style lines and build rhythm",
     keys: "all",
     exercises: [
-      "Learning to type quickly is one of the most valuable skills you can develop in the modern world.",
-      "When you can type without looking at the keyboard, your brain is free to focus on the content.",
-      "Touch typing is not just about speed. It is about building a direct connection between your thoughts and the screen.",
-      "The best typists practice every single day, even if only for fifteen minutes. Consistency beats intensity.",
+      "Started from the bottom, now we climbing every day. Hard work pays off when you find your own way.",
+      "The city lights are shining, the crowd is getting loud. I write my story down and I say it proud.",
+      "Dream big, stay humble, let the rhythm take the lead. Plant the seeds of patience, watch them grow from every deed.",
+      "No shortcuts to the top, every step is earned. Lessons in the struggle, bridges built not burned.",
+      "Microphone check, one two, the beat drops heavy. Pen and paper ready, mind is sharp and steady.",
+      "They told me I could never make it, I just proved them wrong. Every verse a chapter, every chapter makes me strong.",
     ]
   },
   {
