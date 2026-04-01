@@ -267,6 +267,16 @@ function clearKeyboardHighlights() {
   $$('.key.highlight').forEach(k => k.classList.remove('highlight'));
 }
 
+// Enter key to dismiss results modal
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !$('#results-modal').classList.contains('hidden')) {
+    e.preventDefault();
+    $('#results-modal').classList.add('hidden');
+    advanceLesson();
+    return;
+  }
+});
+
 // Physical key press visual feedback
 document.addEventListener('keydown', (e) => {
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.code;
